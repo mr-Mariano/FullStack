@@ -2,10 +2,11 @@ import { useState, useEffect} from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import axios from "axios"
 import Filter from "./components/Filter"
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import phonebookServices from "./services/phonebook"
+
 
 const App = () => {
 
@@ -21,7 +22,7 @@ const App = () => {
   const existsName = (name ,arr) => {
     for(let i = 0; i < arr.length ; i++){
       if(name.toLowerCase() === arr[i].name.toLowerCase()){
-        return true
+        return arr[i]
       }
     }
     return false
@@ -29,30 +30,51 @@ const App = () => {
 
   const addPerson = (e) => {
     e.preventDefault()
-    if (existsName(newName,persons)){
-      window.alert(`${newName} is already in the phonebook`)
-      return
+    const person = existsName(newName,persons)
+    const personObject = {name : person ? person.name : newName , number : number, id : person.id}
+
+    console.log(person);
+    console.log("Person Object: ", personObject);
+    console.log("Name: ", newName);
+
+    if(person){
+      if(window.confirm(`${newName} already exists, would you like to update the information?`)){
+        phonebookServices.update(person.id, personObject)
+        .then(data => {
+          console.log(data);
+          setPersons(persons.map(p => p.id != person.id ? p : data))
+        })
+      }else{
+        return
+      }
     }
-    const personObject = {name : newName , number : number}
-    axios
-      .post("http://localhost:3001/persons", personObject)
-      .then(response => {
-        console.log(response.data)
-        setPersons(persons.concat(response.data))
-        setNewName("")
+
+
+    phonebookServices
+    .create(personObject)
+    .then(data => {
+      console.log("data: ", data);
+      setPersons(persons.concat(data))
+      setNewName("")
       setNumber("")
       setFilter("")
+    })
+
+    console.log("Success")
+  }
+
+  const deletePerson = (id) => {
+    const person = persons.find(person => person.id == id)
+    if(window.confirm(`Delete ${person.name}?`)){
+      phonebookServices.del(id)
+      .then(data => {
+        setPersons(persons.filter(person => person.id != id) )
       })
-    console.log("Success", persons)
+    }
   }
 
   const hook = () => {
-    axios
-    .get("http://localhost:3001/persons")
-    .then( response => {
-      console.log(response)
-      setPersons(response.data)
-    })
+    phonebookServices.getAll().then(data => setPersons(data))
   }
 
   useEffect(hook,[])
@@ -73,7 +95,10 @@ const App = () => {
       </div>
       <h2>Numbers</h2>
       <div>
-        <Persons filteredPeople={filteredPeople}/>
+        <Persons
+          filteredPeople={filteredPeople}
+          deletePerson={deletePerson}
+        />
       </div>
     </div>
   )

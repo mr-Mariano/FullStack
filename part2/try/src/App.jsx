@@ -17,11 +17,10 @@ const App = () => {
     e.preventDefault()
     const random = Math.round(Math.random())
     const note = {
-      id : notes.length + 1 ,
       content : newNote,
       important : random < .5
     }
-
+    console.log(note);
     noteServices.create(note)
     .then(n => {
       setNotes(notes.concat(n))
@@ -44,11 +43,16 @@ const App = () => {
       console.log(response);
       setNotes(notes.map(note => note.id !== id ? note : response))
     })
-    .catch(error => console.log(`error with ${id} and ${changedNote}`, error))
+    .catch(error => {
+      alert(
+        `the note '${note.content}' was already deleted from server`
+      )
+      setNotes(notes.filter(n => n.id !== id))
+    })
   }
 
   useEffect(hookEffect, []);
-
+  console.log(notesToShow.map(note => console.log(note)));
   return (
     <div>
       <h1>Notes</h1>
@@ -60,8 +64,8 @@ const App = () => {
       <ul>
         {
           notesToShow.map(note =>
-          <Note key={note.id}
-                note={note}
+          <Note note={note}
+                key={note.id}
                 toogleImportance={() => toogleImportance(note.id)}/>)
         }
       </ul>
