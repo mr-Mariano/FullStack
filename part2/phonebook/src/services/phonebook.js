@@ -23,9 +23,6 @@ const del = (ID) => {
         console.log(response.data);
         return response.data
      })
-    .catch(error => {
-        console.error(error);
-    })
 }
 
 const update = (ID, UPDATED_OBJECT) => {

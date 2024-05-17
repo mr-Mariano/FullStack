@@ -3,13 +3,16 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import Note from './components/Note'
-import axios from "axios"
 import noteServices from "./services/notes"
+import Notification from './components/Notification'
+import Footer from './components/Footer'
+
 
 const App = () => {
   const [notes, setNotes ]= useState([])
   const [newNote, setNewNote] = useState("")
   const [showAll, setShowAll] = useState(true)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   const notesToShow = showAll ? notes : notes.filter(note => note.important)
 
@@ -36,19 +39,25 @@ const App = () => {
   }
 
   const toogleImportance = (id) => {
+
     const note = notes.find(note => note.id === id)
     const changedNote = {...note, important : !note.important}
+
     noteServices.update(id , changedNote)
     .then(response => {
       console.log(response);
       setNotes(notes.map(note => note.id !== id ? note : response))
     })
     .catch(error => {
-      alert(
+      setErrorMessage(
         `the note '${note.content}' was already deleted from server`
       )
+      setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+      })
       setNotes(notes.filter(n => n.id !== id))
-    })
+
   }
 
   useEffect(hookEffect, []);
@@ -56,6 +65,7 @@ const App = () => {
   return (
     <div>
       <h1>Notes</h1>
+      <Notification message={errorMessage}/>
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? "Important" : "All"}
@@ -73,6 +83,7 @@ const App = () => {
         <input value={newNote} onChange={(e)=> setNewNote(e.target.value)}/>
         <button type="submit">Save</button>
       </form>
+      <Footer/>
     </div>
   )
 }
